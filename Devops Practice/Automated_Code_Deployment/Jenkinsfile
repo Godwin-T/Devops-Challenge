@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone or pull the latest code
+                git branch: 'mater, url: 'https://github.com/Godwin-T/Devops-Challenge.git'
+            }
+        }
+
+        stage('Check for Changes') {
+            steps {
+                script {
+                    // Check for changes using git
+                    def changes = sh(script: "git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD", returnStdout: true).trim()
+                    if (changes) {
+                        echo "Changes detected: ${changes}"
+                        currentBuild.description = "Changes: ${changes}"
+                    } else {
+                        echo "No changes detected."
+                        currentBuild.result = 'NOT_BUILT'
+                        error("No changes detected. Stopping the build.")
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Copy the file to the server directory
+                sh '''
+                cp index.html /var/www/html/
+                echo "Deployment successful!"
+                '''
+            }
+        }
+    }
+}
+
